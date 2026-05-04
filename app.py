@@ -3,7 +3,9 @@ from st_supabase_connection import SupabaseConnection
 import pandas as pd
 from datetime import datetime
 
-# Updated Connection Logic
+# --- SECURE CONNECTION ---
+# This pulls keys from Streamlit Cloud Secrets (online) 
+# or .streamlit/secrets.toml (locally)
 conn = st.connection(
     "supabase",
     type=SupabaseConnection,
@@ -56,7 +58,6 @@ if not raw_df.empty:
     display_df.insert(1, "Del", False)
 
     # --- MAIN TABLE ---
-    st.info("💡 Dates are now displayed in DD/MM/YYYY format.")
     def highlight_recent(row):
         return ['background-color: #d4edda' if row.is_recent else '' for _ in row]
 
@@ -90,7 +91,7 @@ if not raw_df.empty:
                 "received_date": str(row['received_date']) if pd.notnull(row['received_date']) else None,
                 "fresh_qty": int(row['fresh_qty'] or 0), "plain_qty": int(row['plain_qty'] or 0), "short_qty": int(row['short_qty'] or 0)
             }).eq("challan_no", row['challan_no']).execute()
-        st.success("Inline edits saved!")
+        st.success("Changes saved!")
         st.rerun()
 
     # --- EDIT FORM ---
@@ -134,7 +135,7 @@ if not raw_df.empty:
                         "received_date": str(u_rec_date) if u_rec_date else None,
                         "fresh_qty": u_fresh, "short_qty": u_short, "plain_qty": u_plain, "rf_status": u_rf
                     }).eq("challan_no", curr['challan_no']).execute()
-                    st.success("Challan updated!")
+                    st.success("Updated!")
                     st.rerun()
 
 st.markdown("---")
@@ -168,7 +169,7 @@ with st.expander("➕ Click Here to Create a New Order", expanded=False):
         n_plain = c13.number_input("Plain", value=0)
         n_rf = c14.number_input("Rf", value=0)
 
-        if st.form_submit_button("Submit New Order"):
+        if st.form_submit_button("Submit"):
             if not n_challan: st.error("Challan No required!")
             else:
                 conn.table("orders").insert({
@@ -179,5 +180,5 @@ with st.expander("➕ Click Here to Create a New Order", expanded=False):
                     "fresh_qty": n_fresh, "short_qty": n_short, 
                     "plain_qty": n_plain, "rf_status": n_rf
                 }).execute()
-                st.success(f"Challan {n_challan} Added!")
+                st.success(f"Added!")
                 st.rerun()
